@@ -1,0 +1,7 @@
+version: '2'
+
+services:
+  authz:
+    image: ghcr.io/vmware-tanzu-learning/course-secure-rest-api-oauth2-code/sso:0.0.1
+    ports:
+      - '9000:9000'
