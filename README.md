@@ -6,7 +6,15 @@ This repo is a companion to the [Spring Academy Sample Course repository](https:
 
 ## How to use
 
-Duplicate this repository and use it as a basis or reference for your own course code repository.
+- [ ] Duplicate this repository and use it as a basis or reference for your own course code repository.
+- [ ] Set the visibility of this repo to Public
+- [ ] Make sure `scripts/stage-codebase.sh` has executable permissions
+- [ ] Create and push a branch named `prod`
+
+### Branches and environments 
+
+- `main` - Commits to this branch will automatically be deployed to Spring Academy **Staging**
+- `prod` - Commits will be used for Spring Academy. Deploys are a manual process at this time. 
 
 ## Documentation
 
