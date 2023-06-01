@@ -2,7 +2,7 @@
 
 This repository represents the structure of the [real-world simulated project](https://github.com/vmware-tanzu-learning/spring-academy/blob/main/docs/lab-authoring-style-guide.md#remember-youre-building-a-real-application) used to teach Spring Academy leaners concepts taught in a course. 
 
-This repo is a companion to the [Spring Academy Sample Course repository](https://github.com/vmware-tanzu-learning/spring-academy-sample-course).
+This repo is a companion to the [Spring Academy Sample Course repository](https://github.com/vmware-tanzu-learning/course-spring-academy-sample).
 
 ## How to use
 
