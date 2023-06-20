@@ -4,16 +4,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser(authorities = "SCOPE_CARD-OWNER")
 class CashCardApplicationTests {
 
     @Autowired
@@ -36,19 +40,27 @@ class CashCardApplicationTests {
     @Test
     @DirtiesContext
     void shouldCreateANewCashCard() throws Exception {
+        MvcResult result = mockMvc.perform(post("/security/token")
+                        .with(httpBasic("sarah1", "abc123")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String token = result.getResponse().getContentAsString();
+
         String location = mockMvc.perform(post("/cashcards")
-                .contentType("application/json")
-                .content("""
-                        {
-                            "amount" : 250.00,
-                            "owner" : "sarah1"
-                        }
-                       """))
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("""
+                            {
+                                "amount" : 250.00,
+                                "owner" : "sarah1"
+                            }
+                                """))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
                 .andReturn().getResponse().getHeader("Location");
 
-        mockMvc.perform(get(location))
+        mockMvc.perform(get(location).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.amount").value(250.00));
@@ -81,5 +93,26 @@ class CashCardApplicationTests {
                 .andExpect(jsonPath("$[*]").value(hasSize(3)))
                 .andExpect(jsonPath("$..amount").value(contains(1.00, 123.45, 150.00)));
 
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldNotReturnACashCardWhenUsingBadCredentials() throws Exception {
+        mockMvc.perform(get("/cashcards/99")
+                        .with(httpBasic("sarah1", "wrongpassword")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(authorities = "SCOPE_NON-OWNER")
+    void shouldRejectUsersWhoAreNotCardOwners() throws Exception {
+        mockMvc.perform(get("/cashcards/99"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldNotAllowAccessToCashCardsTheyDoNotOwn() throws Exception {
+        mockMvc.perform(get("/cashcards/102"))
+                .andExpect(status().isNotFound());
     }
 }
