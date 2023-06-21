@@ -5,6 +5,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -16,9 +18,11 @@ import java.util.Optional;
 @RequestMapping("/cashcards")
 public class CashCardController {
     private CashCardRepository cashCardRepository;
+    private AuditMetric auditMetric;
 
-    public CashCardController(CashCardRepository cashCardRepository) {
+    public CashCardController(CashCardRepository cashCardRepository, AuditMetric auditMetric) {
         this.cashCardRepository = cashCardRepository;
+        this.auditMetric = auditMetric;
     }
 
     @GetMapping("/{requestedId}")
@@ -33,6 +37,11 @@ public class CashCardController {
 
     @PostMapping
     private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            auditMetric.increment();
+        }
+
         CashCard savedCashCard = cashCardRepository.save(newCashCardRequest);
         URI locationOfNewCashCard = ucb
                 .path("cashcards/{id}")

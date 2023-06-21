@@ -48,23 +48,24 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                         authorizeHttpRequests
-                                .requestMatchers("/security/token")
+                                .requestMatchers("/security/token","/actuator/**")
                                     .permitAll()
                                 .requestMatchers("/cashcards/**","/security/profile/**").hasAuthority("SCOPE_CARD-OWNER")
                                     .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.ignoringRequestMatchers("/security/token"))
                 .httpBasic(Customizer.withDefaults())
-                .oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()))
+
+                // The following code needs to be commented out to enable the POST endpoint to work
+                //.oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()))
 
                 // The following code needs to be added to enable the POST endpoint to work
-                /*
                 .oauth2ResourceServer(config ->
                     config.jwt(jwtConfigurer ->
                         jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter())
                     )
                 )
-                */
+
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling((exceptions) -> exceptions
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
@@ -87,12 +88,18 @@ public class SecurityConfig {
                 .password(passwordEncoder.encode("abc123"))
                 .authorities("SCOPE_CARD-OWNER") // new role
                 .build();
+        UserDetails joe = users
+                .username("joe")
+                .password(passwordEncoder.encode("s$cre3t"))
+                .authorities("SCOPE_CARD-OWNER") // new role
+                .build();
+
         UserDetails hankOwnsNoCards = users
                 .username("hank-owns-no-cards")
                 .password(passwordEncoder.encode("qrs456"))
                 .authorities("SCOPE_NON-OWNER") // new role
                 .build();
-        return new InMemoryUserDetailsManager(sarah, hankOwnsNoCards);
+        return new InMemoryUserDetailsManager(sarah, joe, hankOwnsNoCards);
     }
 
     @Bean
