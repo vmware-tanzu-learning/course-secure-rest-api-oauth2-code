@@ -21,18 +21,13 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
@@ -56,15 +51,7 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.ignoringRequestMatchers("/security/token"))
                 .httpBasic(Customizer.withDefaults())
 
-                // The following code needs to be commented out to enable the POST endpoint to work
-                //.oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()))
-
-                // The following code needs to be added to enable the POST endpoint to work
-                .oauth2ResourceServer(config ->
-                    config.jwt(jwtConfigurer ->
-                        jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter())
-                    )
-                )
+                .oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()))
 
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling((exceptions) -> exceptions
@@ -86,18 +73,18 @@ public class SecurityConfig {
         UserDetails sarah = users
                 .username("sarah1")
                 .password(passwordEncoder.encode("abc123"))
-                .authorities("SCOPE_CARD-OWNER") // new role
+                .authorities("CARD-OWNER")
                 .build();
         UserDetails joe = users
                 .username("joe")
                 .password(passwordEncoder.encode("s$cre3t"))
-                .authorities("SCOPE_CARD-OWNER") // new role
+                .authorities("CARD-OWNER")
                 .build();
 
         UserDetails hankOwnsNoCards = users
                 .username("hank-owns-no-cards")
                 .password(passwordEncoder.encode("qrs456"))
-                .authorities("SCOPE_NON-OWNER") // new role
+                .authorities("NON-OWNER")
                 .build();
         return new InMemoryUserDetailsManager(sarah, joe, hankOwnsNoCards);
     }
@@ -112,15 +99,5 @@ public class SecurityConfig {
         JWK jwk = new RSAKey.Builder(this.key).privateKey(this.priv).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
-    }
-
-    private JwtAuthenticationConverter customJwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
-
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
-
-        return jwtAuthenticationConverter;
     }
 }

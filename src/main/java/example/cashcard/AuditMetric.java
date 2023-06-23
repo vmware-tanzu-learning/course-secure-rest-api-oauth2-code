@@ -11,7 +11,7 @@ public class AuditMetric{
     final Counter counter;
 
     public AuditMetric(MeterRegistry registry){
-        counter = registry.counter("cashcards.hits","createCashCard");
+        counter = registry.counter("cashcards.hits","name","createCashCard");
     }
 
     public void increment(){

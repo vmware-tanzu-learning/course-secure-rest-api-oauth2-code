@@ -18,12 +18,12 @@ import java.util.Optional;
 @RequestMapping("/cashcards")
 public class CashCardController {
     private CashCardRepository cashCardRepository;
-    private AuditMetric auditMetric;
 
-    public CashCardController(CashCardRepository cashCardRepository, AuditMetric auditMetric) {
+    public CashCardController(CashCardRepository cashCardRepository) {
         this.cashCardRepository = cashCardRepository;
-        this.auditMetric = auditMetric;
     }
+
+    // Only the Owner cards can see their cards
 
     @GetMapping("/{requestedId}")
     public ResponseEntity<CashCard> findById(@PathVariable Long requestedId) {
@@ -35,12 +35,16 @@ public class CashCardController {
         }
     }
 
+    // Only the Owner of the Card can create cashcard
+
     @PostMapping
     private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            auditMetric.increment();
-        }
+        // This could be potentially be on an Event. Security event just happen.
+
+        //Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        //if (authentication != null && authentication.isAuthenticated()) {
+        //    auditMetric.increment();
+        //}
 
         CashCard savedCashCard = cashCardRepository.save(newCashCardRequest);
         URI locationOfNewCashCard = ucb
@@ -49,6 +53,9 @@ public class CashCardController {
                 .toUri();
         return ResponseEntity.created(locationOfNewCashCard).build();
     }
+
+    // Who the user is, not all the users can see other cashcards.
+    // Admin can see everything -  we need two endpoints
 
     @GetMapping
     public ResponseEntity<List<CashCard>> findAll(Pageable pageable) {
