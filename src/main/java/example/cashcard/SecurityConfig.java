@@ -56,15 +56,6 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.ignoringRequestMatchers("/security/token"))
                 .httpBasic(Customizer.withDefaults())
                 .oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()))
-
-                // The following code needs to be added to enable the POST endpoint to work
-                /*
-                .oauth2ResourceServer(config ->
-                    config.jwt(jwtConfigurer ->
-                        jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter())
-                    )
-                )
-                */
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling((exceptions) -> exceptions
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
@@ -85,12 +76,12 @@ public class SecurityConfig {
         UserDetails sarah = users
                 .username("sarah1")
                 .password(passwordEncoder.encode("abc123"))
-                .authorities("SCOPE_CARD-OWNER") // new role
+                .authorities("CARD-OWNER") // new role
                 .build();
         UserDetails hankOwnsNoCards = users
                 .username("hank-owns-no-cards")
                 .password(passwordEncoder.encode("qrs456"))
-                .authorities("SCOPE_NON-OWNER") // new role
+                .authorities("NON-OWNER") // new role
                 .build();
         return new InMemoryUserDetailsManager(sarah, hankOwnsNoCards);
     }
@@ -105,15 +96,5 @@ public class SecurityConfig {
         JWK jwk = new RSAKey.Builder(this.key).privateKey(this.priv).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
-    }
-
-    private JwtAuthenticationConverter customJwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
-
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
-
-        return jwtAuthenticationConverter;
     }
 }
