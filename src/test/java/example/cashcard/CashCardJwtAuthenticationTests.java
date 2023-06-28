@@ -40,7 +40,7 @@ public class CashCardJwtAuthenticationTests {
 
     @Test
     void shouldReturnProfileUsingSecurityContext() throws Exception {
-        mockMvc.perform(get("/security/profile/authentication")
+        mockMvc.perform(get("/security/profile/context")
                         .with(jwt().jwt((jwt) -> jwt
                                 .claim("scope", "CARD-OWNER")
                                 .subject("sarah1"))))

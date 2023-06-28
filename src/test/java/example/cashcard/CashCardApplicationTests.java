@@ -8,11 +8,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -24,26 +25,33 @@ class CashCardApplicationTests {
 
     @Test
     void shouldReturnACashCardWhenDataIsSaved() throws Exception {
-        mockMvc.perform(get("/cashcards/99").with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get("/cashcards/99")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
                 .andExpect(jsonPath("$.id").value(99))
                 .andExpect(jsonPath("$.amount").value(123.45));
     }
 
     @Test
     void shouldNotReturnACashCardWithAnUnknownId() throws Exception {
-        mockMvc.perform(get("/cashcards/1000").with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get("/cashcards/1000")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(""));
     }
 
     @Test
     void shouldCreateANewCashCard() throws Exception {
-        String location = mockMvc.perform(post("/cashcards").with(jwt().jwt((jwt) -> jwt
-                                .claim("scope", "CARD-OWNER")
+
+
+        String location = mockMvc.perform(post("/cashcards")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-ADMIN")
                                 .subject("sarah1")))
                         .contentType("application/json")
                         .content("""
@@ -56,46 +64,67 @@ class CashCardApplicationTests {
                 .andExpect(header().exists("Location"))
                 .andReturn().getResponse().getHeader("Location");
 
-        mockMvc.perform(get(location).with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get(location)
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.amount").value(250.00));
     }
 
     @Test
+    void shouldReturnVoidWhenDeleteCashCardByIdRequest() throws Exception {
+        mockMvc.perform(delete("/cashcards/101")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", Arrays.asList("CARD-ADMIN", "CARD-OWNER"))
+                                .subject("sarah1")))
+                )
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void shouldReturnAllCashCardsWhenListIsRequested() throws Exception {
-         mockMvc.perform(get("/cashcards").with(jwt().jwt((jwt) -> jwt
-                         .claim("scope", "CARD-OWNER")
-                         .subject("sarah1"))))
-                 .andExpect(jsonPath("$.length()").value(3))
-                 .andExpect(jsonPath("$..id").value(containsInAnyOrder(99, 100, 101)))
-                 .andExpect(jsonPath("$..amount").value(containsInAnyOrder(123.45, 1.00, 150.00)));
+        mockMvc.perform(get("/cashcards")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$..id").value(containsInAnyOrder(99, 100, 101)))
+                .andExpect(jsonPath("$..amount").value(containsInAnyOrder(123.45, 1.00, 150.00)));
     }
 
     @Test
     void shouldReturnAPageOfCashCards() throws Exception {
-        mockMvc.perform(get("/cashcards?page=0&size=1").with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get("/cashcards?page=0&size=1")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
                 .andExpect(jsonPath("$[*]").value(hasSize(1)));
     }
 
     @Test
     void shouldReturnASortedPageOfCashCards() throws Exception {
-        mockMvc.perform(get("/cashcards?page=0&size=1&sort=amount,desc").with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get("/cashcards?page=0&size=1&sort=amount,desc")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
                 .andExpect(jsonPath("$[*]").value(hasSize(1)))
                 .andExpect(jsonPath("$..amount").value(hasItem(150.00)));
     }
 
     @Test
     void shouldReturnASortedPageOfCashCardsWithNoParametersAndUseDefaultValues() throws Exception {
-        mockMvc.perform(get("/cashcards").with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get("/cashcards")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
                 .andExpect(jsonPath("$[*]").value(hasSize(3)))
                 .andExpect(jsonPath("$..amount").value(contains(1.00, 123.45, 150.00)));
 
@@ -118,9 +147,11 @@ class CashCardApplicationTests {
 
     @Test
     void shouldNotAllowAccessToCashCardsTheyDoNotOwn() throws Exception {
-        mockMvc.perform(get("/cashcards/102").with(jwt().jwt((jwt) -> jwt
-                        .claim("scope", "CARD-OWNER")
-                        .subject("sarah1"))))
+        mockMvc.perform(get("/cashcards/102")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-OWNER")
+                                .subject("sarah1")))
+                )
                 .andExpect(status().isNotFound());
     }
 }

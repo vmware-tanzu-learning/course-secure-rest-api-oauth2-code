@@ -9,6 +9,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,13 +22,18 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
@@ -43,16 +49,16 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                         authorizeHttpRequests
-                                .requestMatchers("/security/token","/actuator/**")
-                                    .permitAll()
+                                .requestMatchers("/security/token")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST).hasAuthority("SCOPE_CARD-ADMIN")
+                                .requestMatchers(HttpMethod.DELETE).hasAuthority("SCOPE_CARD-ADMIN")
                                 .requestMatchers("/cashcards/**","/security/profile/**").hasAuthority("SCOPE_CARD-OWNER")
-                                    .anyRequest().authenticated()
+                                .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.ignoringRequestMatchers("/security/token"))
                 .httpBasic(Customizer.withDefaults())
-
                 .oauth2ResourceServer(config -> config.jwt(Customizer.withDefaults()))
-
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling((exceptions) -> exceptions
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
@@ -73,20 +79,14 @@ public class SecurityConfig {
         UserDetails sarah = users
                 .username("sarah1")
                 .password(passwordEncoder.encode("abc123"))
-                .authorities("CARD-OWNER")
+                .authorities("CARD-OWNER","CARD-ADMIN") // new role
                 .build();
-        UserDetails joe = users
-                .username("joe")
-                .password(passwordEncoder.encode("s$cre3t"))
-                .authorities("CARD-OWNER")
-                .build();
-
         UserDetails hankOwnsNoCards = users
                 .username("hank-owns-no-cards")
                 .password(passwordEncoder.encode("qrs456"))
-                .authorities("NON-OWNER")
+                .authorities("NON-OWNER") // new role
                 .build();
-        return new InMemoryUserDetailsManager(sarah, joe, hankOwnsNoCards);
+        return new InMemoryUserDetailsManager(sarah, hankOwnsNoCards);
     }
 
     @Bean
