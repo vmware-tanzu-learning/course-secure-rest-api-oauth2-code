@@ -4,3 +4,11 @@ CREATE TABLE cash_card
     AMOUNT   NUMBER NOT NULL DEFAULT 0,
     OWNER    VARCHAR(256) NOT NULL
 );
+
+CREATE TABLE cash_card_owner
+(
+    OWNER     VARCHAR(256) PRIMARY KEY
+);
+
+ALTER TABLE IF EXISTS cash_card
+    ADD CONSTRAINT cash_card_owner_cash_card FOREIGN KEY (OWNER) REFERENCES cash_card_owner;
