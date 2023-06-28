@@ -7,13 +7,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -46,13 +44,12 @@ class CashCardApplicationTests {
     }
 
     @Test
-    @DirtiesContext
     void shouldCreateANewCashCard() throws Exception {
 
 
         String location = mockMvc.perform(post("/cashcards")
                         .with(jwt().jwt((jwt) -> jwt
-                                .claim("scope", "CARD-OWNER")
+                                .claim("scope", "CARD-ADMIN")
                                 .subject("sarah1")))
                         .contentType("application/json")
                         .content("""
@@ -74,6 +71,16 @@ class CashCardApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.amount").value(250.00));
+    }
+
+    @Test
+    void shouldDeleteACashCardByItsIdRequest() throws Exception {
+        mockMvc.perform(delete("/cashcards/101")
+                        .with(jwt().jwt((jwt) -> jwt
+                                .claim("scope", "CARD-ADMIN")
+                                .subject("sarah1")))
+                )
+                .andExpect(status().isNoContent());
     }
 
     @Test

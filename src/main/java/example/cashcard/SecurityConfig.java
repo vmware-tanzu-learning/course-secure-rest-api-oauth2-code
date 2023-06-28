@@ -9,6 +9,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -50,6 +51,8 @@ public class SecurityConfig {
                         authorizeHttpRequests
                                 .requestMatchers("/security/token")
                                     .permitAll()
+                                .requestMatchers(HttpMethod.POST).hasAuthority("SCOPE_CARD-ADMIN")
+                                .requestMatchers(HttpMethod.DELETE).hasAuthority("SCOPE_CARD-ADMIN")
                                 .requestMatchers("/cashcards/**","/security/profile/**").hasAuthority("SCOPE_CARD-OWNER")
                                     .anyRequest().authenticated()
                 )
@@ -76,7 +79,7 @@ public class SecurityConfig {
         UserDetails sarah = users
                 .username("sarah1")
                 .password(passwordEncoder.encode("abc123"))
-                .authorities("CARD-OWNER") // new role
+                .authorities("CARD-OWNER","CARD-ADMIN") // new role
                 .build();
         UserDetails hankOwnsNoCards = users
                 .username("hank-owns-no-cards")
