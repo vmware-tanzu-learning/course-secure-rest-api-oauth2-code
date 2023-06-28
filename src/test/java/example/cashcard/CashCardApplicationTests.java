@@ -8,6 +8,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -74,10 +76,10 @@ class CashCardApplicationTests {
     }
 
     @Test
-    void shouldDeleteACashCardByItsIdRequest() throws Exception {
+    void shouldReturnVoidWhenDeleteCashCardByIdRequest() throws Exception {
         mockMvc.perform(delete("/cashcards/101")
                         .with(jwt().jwt((jwt) -> jwt
-                                .claim("scope", "CARD-ADMIN")
+                                .claim("scope", Arrays.asList("CARD-ADMIN", "CARD-OWNER"))
                                 .subject("sarah1")))
                 )
                 .andExpect(status().isNoContent());
