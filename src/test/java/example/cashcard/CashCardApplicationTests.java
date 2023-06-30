@@ -51,7 +51,7 @@ class CashCardApplicationTests {
 
         String location = mockMvc.perform(post("/cashcards")
                         .with(jwt().jwt((jwt) -> jwt
-                                .claim("scope", "CARD-ADMIN")
+                                .claim("scope", Arrays.asList("CARD-ADMIN", "CARD-OWNER"))
                                 .subject("sarah1")))
                         .contentType("application/json")
                         .content("""
