@@ -8,8 +8,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.METHOD)
+@Target({ ElementType.PARAMETER, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@CurrentSecurityContext(expression = "hasAuthority('CARD_ADMIN')")
+@CurrentSecurityContext(expression = "authentication.authorities.contains('CARD-OWNER') || authentication.authorities.contains('CARD-ADMIN')")
 public @interface CashCardRequiredCardOwner {
 }
