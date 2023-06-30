@@ -41,9 +41,8 @@ public class CashCardController {
         }
     }
 
-    @CashCardRequiredCardOwner
     @PostMapping
-    private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb) {
+    private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb, @CashCardRequiredCardOwner Authentication authentication) {
         CashCard savedCashCard = cashCardRepository.save(newCashCardRequest);
         URI locationOfNewCashCard = ucb
                 .path("cashcards/{id}")
@@ -66,7 +65,6 @@ public class CashCardController {
         return ResponseEntity.ok(page.getContent());
     }
 
-    @CashCardRequiredCardOwner
     @DeleteMapping("/{requestedId}")
     public ResponseEntity<Void> deleteById(@PathVariable Long requestedId, @AuthenticationPrincipal(expression = "claims['sub']")  String username) {
         // Audit log the request
