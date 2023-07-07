@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 
 @Target({ ElementType.PARAMETER, ElementType.ANNOTATION_TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@CurrentSecurityContext(expression = "authentication.authorities.contains('CARD-OWNER') || authentication.authorities.contains('CARD-ADMIN')")
-public @interface CashCardRequiredCardOwner {
+@CurrentSecurityContext(expression="authentication.name")
+public @interface CurrentOwner {
 }

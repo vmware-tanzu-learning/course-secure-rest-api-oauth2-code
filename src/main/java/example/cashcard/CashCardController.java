@@ -1,27 +1,18 @@
 package example.cashcard;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/cashcards")
 public class CashCardController {
 
-    private Logger log = LoggerFactory.getLogger(CashCardController.class);
     private CashCardRepository cashCardRepository;
 
     public CashCardController(CashCardRepository cashCardRepository) {
@@ -29,10 +20,7 @@ public class CashCardController {
     }
 
     @GetMapping("/{requestedId}")
-    public ResponseEntity<CashCard> findById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long requestedId) {
-        // Audit log the request
-        log.info("User {} is requesting find by {}",jwt.getSubject(),requestedId);
-
+    public ResponseEntity<CashCard> findById(@PathVariable Long requestedId) {
         Optional<CashCard> cashCardOptional = cashCardRepository.findById(requestedId);
         if (cashCardOptional.isPresent()) {
             return ResponseEntity.ok(cashCardOptional.get());
@@ -41,7 +29,7 @@ public class CashCardController {
         }
     }
     @PostMapping
-    private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb, @CashCardRequiredCardOwner Authentication authentication) {
+    private ResponseEntity<Void> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb) {
         CashCard savedCashCard = cashCardRepository.save(newCashCardRequest);
         URI locationOfNewCashCard = ucb
                 .path("cashcards/{id}")
@@ -50,11 +38,9 @@ public class CashCardController {
         return ResponseEntity.created(locationOfNewCashCard).build();
     }
 
+    /*
     @GetMapping
-    public ResponseEntity<List<CashCard>> findAll(Authentication authentication, Pageable pageable) {
-        // Audit log the request
-        log.info("User {} is requesting all cash cards",authentication.getName());
-
+    public ResponseEntity<List<CashCard>> findAll(Pageable pageable) {
         Page<CashCard> page = cashCardRepository.findAll(
                 PageRequest.of(
                         pageable.getPageNumber(),
@@ -63,12 +49,69 @@ public class CashCardController {
                 ));
         return ResponseEntity.ok(page.getContent());
     }
-    @DeleteMapping("/{requestedId}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long requestedId, @AuthenticationPrincipal(expression = "claims['sub']")  String username) {
-        // Audit log the request
-        log.info("User {} is requesting delete by {}",username,requestedId);
+    */
 
+    @DeleteMapping("/{requestedId}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long requestedId) {
         cashCardRepository.deleteById(requestedId);
         return ResponseEntity.noContent().build();
     }
+
+    // New Methods
+
+
+    // (1)
+    /*
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(Authentication authentication) {
+        var result = StreamSupport.stream(cashCardRepository.findAll().spliterator(), false)
+                .filter(cashCardOwner -> cashCardOwner.owner().equals(authentication.getName())).toList();
+        return ResponseEntity.ok(result);
+    }
+    */
+
+    // (2)
+    /*
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(Authentication authentication) {
+        var result = cashCardRepository.findByOwner(authentication.getName());
+        return ResponseEntity.ok(result);
+    }
+    */
+
+    // ()
+    /*
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(@AuthenticationPrincipal Jwt jwt) {
+        var result = cashCardRepository.findByOwner(jwt.getSubject());
+        return ResponseEntity.ok(result);
+    }
+    */
+
+    // ()
+    /*
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(@CurrentSecurityContext SecurityContext securityContext) {
+        var result = cashCardRepository.findByOwner(securityContext.getAuthentication().getName());
+        return ResponseEntity.ok(result);
+    }
+    */
+
+    // ()
+    /*
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(@CurrentSecurityContext(expression="authentication.name") String owner) {
+        var result = cashCardRepository.findByOwner(owner);
+        return ResponseEntity.ok(result);
+    }
+    */
+
+    // ()
+    /*
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(@CurrentOwner String owner) {
+        var result = cashCardRepository.findByOwner(owner);
+        return ResponseEntity.ok(result);
+    }
+    */
 }
