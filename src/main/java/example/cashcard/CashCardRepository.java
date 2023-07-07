@@ -12,4 +12,5 @@ import org.springframework.data.repository.CrudRepository;
  * @author Josh Cummings
  */
 public interface CashCardRepository extends CrudRepository<CashCard, Long> {
+	Iterable<CashCard> findByOwner(String owner);
 }
