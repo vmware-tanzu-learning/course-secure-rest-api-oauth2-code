@@ -34,8 +34,9 @@ public class CashCardController {
     }
 
     @PostMapping
-    private ResponseEntity<CashCard> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb) {
-        CashCard savedCashCard = this.cashCards.save(newCashCardRequest);
+    private ResponseEntity<CashCard> createCashCard(@RequestBody CashCard newCashCardRequest, UriComponentsBuilder ucb, @CurrentOwner String owner) {
+        CashCard withOwner = new CashCard(null, newCashCardRequest.amount(), owner);
+        CashCard savedCashCard = this.cashCards.save(withOwner);
         URI locationOfNewCashCard = ucb
                 .path("cashcards/{id}")
                 .buildAndExpand(savedCashCard.id())
@@ -44,7 +45,7 @@ public class CashCardController {
     }
 
     @GetMapping
-    public ResponseEntity<Iterable<CashCard>> findAll() {
-        return ResponseEntity.ok(this.cashCards.findAll());
+    public ResponseEntity<Iterable<CashCard>> findAll(@CurrentOwner String owner) {
+        return ResponseEntity.ok(this.cashCards.findByOwner(owner));
     }
 }
