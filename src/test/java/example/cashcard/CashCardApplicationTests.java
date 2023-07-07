@@ -121,9 +121,9 @@ class CashCardApplicationTests {
 
     /*
     @Test
-    void shouldReturnAllCashCardsByOwnerWhenListIsRequested() throws Exception {
+    void shouldReturnAllCashCardsByOwnerUsingJWTWhenListIsRequested() throws Exception {
         mockMvc.perform(get("/cashcards")
-                        .with(jwt().jwt((jwt) -> jwt.claim("sub", "esuez"))))
+                        .with(jwt().jwt((jwt) -> jwt.subject("esuez"))))
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$..id").value(containsInAnyOrder(400, 416, 423)))
                 .andExpect(jsonPath("$..amount").value(containsInAnyOrder(233.75, 123.60, 52.00)));

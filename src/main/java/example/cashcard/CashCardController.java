@@ -1,13 +1,16 @@
 package example.cashcard;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/cashcards")
@@ -64,8 +67,14 @@ public class CashCardController {
     /*
     @GetMapping
     public ResponseEntity<Iterable<CashCard>> findAll(Authentication authentication) {
-        var result = StreamSupport.stream(cashCardRepository.findAll().spliterator(), false)
-                .filter(cashCardOwner -> cashCardOwner.owner().equals(authentication.getName())).toList();
+        var result = new ArrayList<CashCard>();
+
+        cashCardRepository.findAll().forEach(cashCard -> {
+            if (cashCard.owner().equals(authentication.getName())){
+                result.add(cashCard);
+            }
+        });
+
         return ResponseEntity.ok(result);
     }
     */
@@ -79,16 +88,7 @@ public class CashCardController {
     }
     */
 
-    // ()
-    /*
-    @GetMapping
-    public ResponseEntity<Iterable<CashCard>> findAll(@AuthenticationPrincipal Jwt jwt) {
-        var result = cashCardRepository.findByOwner(jwt.getSubject());
-        return ResponseEntity.ok(result);
-    }
-    */
-
-    // ()
+    // (3)
     /*
     @GetMapping
     public ResponseEntity<Iterable<CashCard>> findAll(@CurrentSecurityContext SecurityContext securityContext) {
@@ -97,7 +97,7 @@ public class CashCardController {
     }
     */
 
-    // ()
+    // (4)
     /*
     @GetMapping
     public ResponseEntity<Iterable<CashCard>> findAll(@CurrentSecurityContext(expression="authentication.name") String owner) {
@@ -106,7 +106,7 @@ public class CashCardController {
     }
     */
 
-    // ()
+    // (5)
     /*
     @GetMapping
     public ResponseEntity<Iterable<CashCard>> findAll(@CurrentOwner String owner) {
@@ -114,4 +114,13 @@ public class CashCardController {
         return ResponseEntity.ok(result);
     }
     */
+
+    // (6)
+
+    @GetMapping
+    public ResponseEntity<Iterable<CashCard>> findAll(@AuthenticationPrincipal Jwt jwt) {
+        var result = cashCardRepository.findByOwner(jwt.getSubject());
+        return ResponseEntity.ok(result);
+    }
+
 }
