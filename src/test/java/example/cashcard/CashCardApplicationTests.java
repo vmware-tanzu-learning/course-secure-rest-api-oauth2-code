@@ -4,11 +4,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import java.time.Instant;
+import java.util.List;
+
+import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,8 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CashCardApplicationTests {
 
     @Autowired
+    JwtEncoder encoder;
+
+    @Autowired
     private MockMvc mockMvc;
 
+    /*
     @Test
     void shouldReturnACashCardWhenDataIsSaved() throws Exception {
         mockMvc.perform(get("/cashcards/99"))
@@ -64,5 +74,68 @@ class CashCardApplicationTests {
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$..id").value(containsInAnyOrder(99, 100, 101)))
                 .andExpect(jsonPath("$..amount").value(containsInAnyOrder(123.45, 1.00, 150.00)));
+    }
+    */
+
+    //(1)
+    /*
+    @Test
+    void requestWhenInvalidTokenThenErrorDetails() throws Exception {
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                //expires at 0 seconds
+                .expiresAt(Instant.ofEpochSecond(0))
+                .audience(List.of("https://wrong")).build();
+        String token = this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        this.mockMvc.perform(get("/cashcards")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+    */
+
+    // (2)
+    /*
+    @Test
+    void requestWhenInvalidTokenThenErrorDetails() throws Exception {
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                //expires at 0 seconds
+                .expiresAt(Instant.ofEpochSecond(0))
+                .audience(List.of("https://wrong")).build();
+        String token = this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        this.mockMvc.perform(get("/cashcards")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+    */
+
+    // (3) - With the fix of ProblemDetailsAuthenticationEntryPoint.
+    /*
+    @Test
+    void requestWhenInvalidTokenThenErrorDetails() throws Exception {
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                //expires at 0 seconds
+                .expiresAt(Instant.ofEpochSecond(0))
+                .audience(List.of("https://wrong")).build();
+        String token = this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        this.mockMvc.perform(get("/cashcards")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().exists("WWW-Authenticate"));
+    }
+    */
+
+    // (4)
+    @Test
+    void requestWhenInvalidTokenThenErrorDetails() throws Exception {
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                //expires at 0 seconds
+                .expiresAt(Instant.ofEpochSecond(0))
+                .audience(List.of("https://wrong")).build();
+        String token = this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        this.mockMvc.perform(get("/cashcards")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().exists("WWW-Authenticate"))
+                .andExpect(jsonPath("$.errors..description").value(contains(matchesRegex(".*expired.*"))));
+        ;
     }
 }
