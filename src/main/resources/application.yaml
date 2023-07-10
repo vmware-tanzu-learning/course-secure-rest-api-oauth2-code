@@ -1,0 +1,14 @@
+# JWT
+jwt:
+  private:
+    key: classpath:/authz.pem
+  public:
+    key: classpath:/authz.pub
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          audiences:
+            - "https://cashcard.example.org"
