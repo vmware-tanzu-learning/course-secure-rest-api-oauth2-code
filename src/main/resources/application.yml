@@ -1,0 +1,9 @@
+logging.level:
+  org.springframework.security: TRACE
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:authz.pub
