@@ -3,6 +3,9 @@ package example.cashcard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -30,8 +33,8 @@ public class CashCardController {
     }
 
     @GetMapping
-    public ResponseEntity<Iterable<CashCard>> findAll(@CurrentOwner String owner){
-        var result = cashCardRepository.findByOwner(owner);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Iterable<CashCard>> findAll() {
+        Jwt owner = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(cashCardRepository.findByOwner(owner.getSubject()));
     }
 }
