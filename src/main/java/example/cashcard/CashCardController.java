@@ -3,6 +3,7 @@ package example.cashcard;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +27,7 @@ public class CashCardController {
         this.cashCards = cashCards;
     }
 
+    @PostAuthorize("returnObject.body.owner == authentication.name")
     @GetMapping("/{requestedId}")
     public ResponseEntity<CashCard> findById(@PathVariable Long requestedId) {
         return this.cashCards.findById(requestedId)
