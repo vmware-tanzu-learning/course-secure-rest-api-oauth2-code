@@ -4,11 +4,13 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,11 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 public class CashCardSpringSecurityTests {
@@ -31,6 +38,26 @@ public class CashCardSpringSecurityTests {
 
 	@Autowired
 	private MockMvc mvc;
+
+	@Test
+	void shouldNotAllowTokensWithAnInvalidAudience() throws Exception {
+		String token = mint((claims) -> claims.audience(List.of("https://wrong")));
+		this.mvc.perform(get("/cashcards/1000").header("Authorization", "Bearer " + token))
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().string("WWW-Authenticate", containsString("aud claim is not valid")));
+
+	}
+
+	@Test
+	void shouldNotAllowTokensThatAreExpired() throws Exception {
+		String token = mint((claims) -> claims
+				.issuedAt(Instant.now().minusSeconds(3600))
+				.expiresAt(Instant.now().minusSeconds(3599))
+		);
+		this.mvc.perform(get("/cashcards/1000").header("Authorization", "Bearer " + token))
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().string("WWW-Authenticate", containsString("Jwt expired")));
+	}
 
 	private String mint(Consumer<JwtClaimsSet.Builder> consumer) {
 		JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
